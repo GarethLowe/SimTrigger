@@ -1,0 +1,25 @@
+<Project>
+  <!--
+    Shared MSFS SDK discovery. Imported by SimLauncher.SimConnect AND SimLauncher.App:
+    the managed wrapper must be a direct reference of the executable, because plain
+    <Reference> items in transitive project references are copied to the output but
+    never recorded in the exe's deps.json — and the .NET host then refuses to load
+    the assembly at runtime.
+    Resolution order: -p:SimConnectSdkDir=<path>, %MSFS2024_SDK%, %MSFS_SDK%.
+  -->
+  <PropertyGroup>
+    <SimConnectSdkDir Condition="'$(SimConnectSdkDir)' == '' AND '$(MSFS2024_SDK)' != ''">$(MSFS2024_SDK)</SimConnectSdkDir>
+    <SimConnectSdkDir Condition="'$(SimConnectSdkDir)' == '' AND '$(MSFS_SDK)' != ''">$(MSFS_SDK)</SimConnectSdkDir>
+    <SimConnectManagedDll>$(SimConnectSdkDir)\SimConnect SDK\lib\managed\Microsoft.FlightSimulator.SimConnect.dll</SimConnectManagedDll>
+    <SimConnectNativeDll>$(SimConnectSdkDir)\SimConnect SDK\lib\SimConnect.dll</SimConnectNativeDll>
+    <SimConnectAvailable>false</SimConnectAvailable>
+    <SimConnectAvailable Condition="Exists('$(SimConnectManagedDll)')">true</SimConnectAvailable>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(SimConnectAvailable)' == 'true'">
+    <Reference Include="Microsoft.FlightSimulator.SimConnect">
+      <HintPath>$(SimConnectManagedDll)</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <None Include="$(SimConnectNativeDll)" Link="SimConnect.dll" CopyToOutputDirectory="PreserveNewest" Visible="false" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,240 @@
+<Window x:Class="SimLauncher.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:SimLauncher.App.ViewModels"
+        Title="SimLauncher" Width="560" Height="760"
+        Icon="/Assets/app.ico"
+        Background="{StaticResource BgBrush}"
+        d:DataContext="{d:DesignInstance Type=vm:MainViewModel}"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d">
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Master button + profile selector -->
+        <Grid Grid.Row="0" Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0" Command="{Binding StartStopCommand}" Height="40"
+                    IsEnabled="{Binding SessionButtonEnabled}">
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                        <Setter Property="Background" Value="#1F4258" />
+                        <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsSessionActive}" Value="True">
+                                <Setter Property="Background" Value="#4A2626" />
+                                <Setter Property="BorderBrush" Value="#A05050" />
+                            </DataTrigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Opacity" Value="0.85" />
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{Binding SessionButtonText}" VerticalAlignment="Center"
+                               FontSize="14" FontWeight="SemiBold" />
+                    <TextBlock Text="{Binding SessionStatusText}" VerticalAlignment="Center"
+                               Margin="10,0,0,0" FontSize="11" Foreground="{StaticResource DimBrush}" />
+                </StackPanel>
+            </Button>
+            <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
+                <TextBlock Text="Profile" FontSize="11" Foreground="{StaticResource DimBrush}" Margin="2,0,0,2" />
+                <ComboBox Width="160"
+                          ItemsSource="{Binding Profiles}"
+                          SelectedItem="{Binding SelectedProfile}"
+                          IsEnabled="{Binding IsSessionActive, Converter={x:Static vm:Converters.Invert}}" />
+                <CheckBox Content="Launch on Windows startup" FontSize="11" Margin="2,6,0,0"
+                          Foreground="{StaticResource DimBrush}"
+                          IsChecked="{Binding LaunchOnStartup}" />
+                <Button Content="Traffic Monitor" FontSize="11" Padding="8,3" Margin="0,6,0,0"
+                        HorizontalAlignment="Left" Click="OnOpenTrafficMonitor" />
+            </StackPanel>
+        </Grid>
+
+        <!-- Config error banner -->
+        <Border Grid.Row="1" Background="#5A2A2A" CornerRadius="4" Padding="8,5" Margin="0,0,0,8"
+                Visibility="{Binding HasConfigError, Converter={x:Static vm:Converters.BoolToVisible}}">
+            <TextBlock Text="{Binding ConfigErrorText}" TextWrapping="Wrap" Foreground="#F0B0B0" />
+        </Border>
+
+        <!-- Checkpoint timeline -->
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding Sections}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="{x:Type vm:SectionViewModel}">
+                        <StackPanel Margin="0,0,4,14">
+                            <!-- Section header -->
+                            <Grid Margin="0,0,0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="✔" Margin="0,0,6,0" FontSize="13"
+                                           Foreground="{StaticResource RunningTextBrush}"
+                                           Visibility="{Binding IsCompleted, Converter={x:Static vm:Converters.BoolToVisible}}" />
+                                <TextBlock Grid.Column="1" Text="{Binding Title}" FontSize="14" FontWeight="SemiBold">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                                    <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <Border Grid.Column="2" Height="1" Margin="10,0,0,0" VerticalAlignment="Center">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="{StaticResource EdgeBrush}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                                    <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                </Border>
+                            </Grid>
+
+                            <!-- Event rows -->
+                            <ItemsControl ItemsSource="{Binding Rows}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type vm:AppRowViewModel}">
+                                        <Border CornerRadius="4" Padding="10,7" Margin="0,0,0,4"
+                                                BorderThickness="1" Cursor="Hand">
+                                            <Border.InputBindings>
+                                                <MouseBinding MouseAction="LeftClick" Command="{Binding EditCommand}" />
+                                            </Border.InputBindings>
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="{StaticResource RowBrush}" />
+                                                    <Setter Property="BorderBrush" Value="{StaticResource EdgeBrush}" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding RowState}" Value="Armed">
+                                                            <Setter Property="Background" Value="{StaticResource ArmedBrush}" />
+                                                            <Setter Property="BorderBrush" Value="#4A6A8A" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding RowState}" Value="Counting">
+                                                            <Setter Property="Background" Value="{StaticResource CountingBrush}" />
+                                                            <Setter Property="BorderBrush" Value="#8A8A4A" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding RowState}" Value="Fired">
+                                                            <Setter Property="Background" Value="{StaticResource FiredBrush}" />
+                                                            <Setter Property="BorderBrush" Value="#4A7A55" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding RowState}" Value="Failed">
+                                                            <Setter Property="Background" Value="{StaticResource FailedBrush}" />
+                                                            <Setter Property="BorderBrush" Value="#8A4A4A" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding RowState}" Value="Dimmed">
+                                                            <Setter Property="Opacity" Value="0.45" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                                    <Border Background="#333338" CornerRadius="3" Padding="5,1" Margin="8,0,0,0"
+                                                            Visibility="{Binding HasDelay, Converter={x:Static vm:Converters.BoolToVisible}}">
+                                                        <TextBlock Text="{Binding DelayText}" FontSize="11"
+                                                                   Foreground="{StaticResource CountdownBrush}" />
+                                                    </Border>
+                                                    <Border Background="#333338" CornerRadius="3" Padding="5,1" Margin="6,0,0,0"
+                                                            Visibility="{Binding HasWait, Converter={x:Static vm:Converters.BoolToVisible}}">
+                                                        <TextBlock Text="{Binding WaitText}" FontSize="11"
+                                                                   Foreground="{StaticResource DimBrush}" />
+                                                    </Border>
+                                                    <TextBlock Text="{Binding CountdownText}" Margin="8,0,0,0" FontWeight="Bold"
+                                                               Foreground="{StaticResource CountdownBrush}" VerticalAlignment="Center" />
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                                    <TextBlock Text="{Binding DetailText}" FontSize="11" Margin="0,0,10,0"
+                                                               Foreground="{StaticResource DimBrush}" VerticalAlignment="Center" />
+                                                    <TextBlock Text="{Binding StatusText}" FontSize="12" VerticalAlignment="Center">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                                                <Setter Property="Foreground" Value="{StaticResource DimBrush}" />
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding RowState}" Value="Fired">
+                                                                        <Setter Property="Foreground" Value="{StaticResource RunningTextBrush}" />
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding RowState}" Value="Failed">
+                                                                        <Setter Property="Foreground" Value="{StaticResource FailedTextBrush}" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <Button Content="＋ Add Event" Command="{Binding AddEventCommand}"
+                                    HorizontalAlignment="Left" FontSize="11" Padding="8,3"
+                                    Foreground="{StaticResource DimBrush}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <!-- Debug panel -->
+        <Expander Grid.Row="3" Header="Debug" Margin="0,8,0,0" IsExpanded="{Binding DebugOpen}">
+            <Border Background="{StaticResource PanelBrush}" CornerRadius="4" Padding="10" Margin="0,6,0,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Margin="0,0,16,0" MinWidth="150">
+                        <TextBlock Text="SimConnect" FontSize="11" Foreground="{StaticResource DimBrush}" />
+                        <TextBlock Text="{Binding ConnectionText}" FontWeight="SemiBold" Margin="0,0,0,8" />
+                        <TextBlock Text="CAMERA STATE" FontSize="11" Foreground="{StaticResource DimBrush}" />
+                        <TextBlock Text="{Binding CameraText}" FontSize="26" FontWeight="Bold"
+                                   Foreground="{StaticResource AccentBrush}" Margin="0,0,0,8" />
+                        <TextBlock Text="Phase" FontSize="11" Foreground="{StaticResource DimBrush}" />
+                        <TextBlock Text="{Binding PhaseText}" FontWeight="SemiBold" Margin="0,0,0,8" />
+                        <TextBlock Text="Aircraft" FontSize="11" Foreground="{StaticResource DimBrush}" />
+                        <TextBlock Text="{Binding AircraftText}" FontWeight="SemiBold" TextWrapping="Wrap"
+                                   MaxWidth="180" Margin="0,0,0,4" />
+                        <TextBlock Text="{Binding PositionText}" FontSize="11" Margin="0,0,0,8"
+                                   Foreground="{StaticResource DimBrush}" TextWrapping="Wrap" MaxWidth="180" />
+                        <TextBlock Text="Recent events" FontSize="11" Foreground="{StaticResource DimBrush}" />
+                        <ItemsControl ItemsSource="{Binding RecentSimEvents}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" FontFamily="Consolas" FontSize="11" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                    <ListBox Grid.Column="1" ItemsSource="{Binding SessionLog}" Height="180"
+                             FontFamily="Consolas" FontSize="11"
+                             ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                             x:Name="LogList" />
+                </Grid>
+            </Border>
+        </Expander>
+    </Grid>
+</Window>

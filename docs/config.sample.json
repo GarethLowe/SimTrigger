@@ -1,0 +1,126 @@
+{
+  "activeProfile": "Full IFR session",
+  "launchOnStartup": false,
+  "autoStartSessionWhenSimDetected": true,
+  "msfs": {
+    "path": "shell:AppsFolder\\Microsoft.Limitless_8wekyb3d8bbwe!App",
+    "args": "",
+    "shellExecute": true,
+    "processNames": [
+      "FlightSimulator2024",
+      "FlightSimulator"
+    ]
+  },
+  "simConnection": {
+    "pollIntervalSeconds": 5,
+    "disconnectGraceSeconds": 30,
+    "debounceSeconds": 2,
+    "cameraStates": {
+      "mainMenu": 11,
+      "loadingScreen": 12,
+      "cockpitMin": 2,
+      "cockpitMax": 6,
+      "flightMin": 2,
+      "flightMax": 10
+    }
+  },
+  "traffic": {
+    "mapboxToken": "pk.your-mapbox-public-token",
+    "webSocketUrl": "ws://127.0.0.1:41717/",
+    "conflictHorizontalNm": 3.0,
+    "conflictVerticalFt": 1000,
+    "cautionHorizontalNm": 5.0,
+    "cautionVerticalFt": 1500,
+    "autoCull": false,
+    "dryRun": true,
+    "autoCullSustainSeconds": 2,
+    "autoCullCooldownSeconds": 120
+  },
+  "profiles": [
+    {
+      "name": "Full IFR session",
+      "apps": [
+        {
+          "name": "SPAD.neXt",
+          "path": "C:\\Program Files (x86)\\SPAD.neXt\\SPAD.neXt.exe",
+          "args": "",
+          "checkpoint": "launcherStart",
+          "delaySeconds": 5,
+          "waitForApp": null,
+          "waitForAppReadySeconds": 0,
+          "shutdown": "graceful",
+          "shutdownTimeoutSeconds": 10,
+          "restartIfCrashed": false,
+          "alreadyRunning": "skip",
+          "shellExecute": false
+        },
+        {
+          "name": "BeyondATC",
+          "path": "C:\\Program Files\\BeyondATC\\BeyondATC.exe",
+          "args": "",
+          "checkpoint": "onSimStart",
+          "delaySeconds": 0,
+          "waitForApp": null,
+          "waitForAppReadySeconds": 0,
+          "shutdown": "graceful",
+          "shutdownTimeoutSeconds": 10,
+          "restartIfCrashed": false,
+          "alreadyRunning": "skip",
+          "shellExecute": false
+        },
+        {
+          "name": "REX Atmos Core",
+          "path": "C:\\Program Files\\REX\\AtmosCore.exe",
+          "args": "",
+          "checkpoint": "onSimStart",
+          "delaySeconds": 0,
+          "waitForApp": null,
+          "waitForAppReadySeconds": 0,
+          "shutdown": "graceful",
+          "shutdownTimeoutSeconds": 10,
+          "restartIfCrashed": false,
+          "alreadyRunning": "skip",
+          "shellExecute": false,
+          "runAsAdmin": true
+        },
+        {
+          "name": "AutoFPS",
+          "path": "C:\\Program Files\\AutoFPS\\AutoFPS.exe",
+          "args": "",
+          "checkpoint": "onWorldLoad",
+          "delaySeconds": 0,
+          "waitForApp": null,
+          "waitForAppReadySeconds": 0,
+          "shutdown": "kill",
+          "shutdownTimeoutSeconds": 10,
+          "restartIfCrashed": false,
+          "alreadyRunning": "skip",
+          "shellExecute": false
+        }
+      ]
+    },
+    {
+      "name": "Test (Notepad)",
+      "apps": [
+        {
+          "name": "Notepad (sim start)",
+          "path": "C:\\Windows\\System32\\notepad.exe",
+          "checkpoint": "onSimStart",
+          "alreadyRunning": "startAnother"
+        },
+        {
+          "name": "Notepad (world load)",
+          "path": "C:\\Windows\\System32\\notepad.exe",
+          "checkpoint": "onWorldLoad",
+          "alreadyRunning": "startAnother"
+        },
+        {
+          "name": "Notepad (cockpit)",
+          "path": "C:\\Windows\\System32\\notepad.exe",
+          "checkpoint": "onEnterCockpit",
+          "alreadyRunning": "startAnother"
+        }
+      ]
+    }
+  ]
+}

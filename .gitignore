@@ -1,0 +1,19 @@
+# Build output
+bin/
+obj/
+TestResults/
+publish/
+*.binlog
+
+# IDE / user state
+.vs/
+*.user
+.idea/
+
+# Claude Code local (per-machine permission grants)
+.claude/settings.local.json
+
+# SimConnect SDK DLLs are not redistributable; they only ever land in bin/, but
+# make sure a stray copy never gets committed either.
+SimConnect.dll
+Microsoft.FlightSimulator.SimConnect.dll

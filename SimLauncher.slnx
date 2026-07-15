@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SimLauncher.App/SimLauncher.App.csproj" />
+    <Project Path="src/SimLauncher.Core/SimLauncher.Core.csproj" />
+    <Project Path="src/SimLauncher.SimConnect/SimLauncher.SimConnect.csproj" />
+    <Project Path="src/SimLauncher.Traffic/SimLauncher.Traffic.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SimLauncher.Core.Tests/SimLauncher.Core.Tests.csproj" />
+    <Project Path="tests/SimLauncher.Traffic.Tests/SimLauncher.Traffic.Tests.csproj" />
+  </Folder>
+</Solution>

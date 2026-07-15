@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Direct SimConnect reference so the wrapper lands in this exe's deps.json (see props file). -->
+  <Import Project="..\SimConnectSdk.props" />
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <!-- WinForms is referenced only for NotifyIcon (tray icon); no custom control libraries. -->
+    <UseWindowsForms>true</UseWindowsForms>
+    <PlatformTarget>x64</PlatformTarget>
+    <AssemblyName>SimLauncher</AssemblyName>
+    <RootNamespace>SimLauncher.App</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Embedded copy so windows and the tray icon can load it at runtime. -->
+    <Resource Include="Assets\app.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- WinForms is only used inside TrayIconService; keep its namespaces out of global usings. -->
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2903.40" />
+    <PackageReference Include="Serilog.Extensions.Hosting" Version="8.0.0" />
+    <PackageReference Include="Serilog.Formatting.Compact" Version="3.0.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SimLauncher.Core\SimLauncher.Core.csproj" />
+    <ProjectReference Include="..\SimLauncher.SimConnect\SimLauncher.SimConnect.csproj" />
+    <ProjectReference Include="..\SimLauncher.Traffic\SimLauncher.Traffic.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Served to the WebView2 via a virtual-host mapping; must exist on disk next to the exe. -->
+    <Content Include="Assets\TrafficMap\map.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+</Project>

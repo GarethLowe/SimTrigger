@@ -1,0 +1,119 @@
+<Window x:Class="SimLauncher.App.EditEventWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Event" Width="440" SizeToContent="Height"
+        Icon="/Assets/app.ico"
+        Background="{StaticResource BgBrush}"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
+        ShowInTaskbar="False">
+    <StackPanel Margin="14">
+        <TextBlock Text="App name" FontSize="11" Foreground="{StaticResource DimBrush}" />
+        <TextBox x:Name="NameBox" Margin="0,2,0,8" />
+
+        <TextBlock Text="Path (exe, or URI like steam://…)" FontSize="11" Foreground="{StaticResource DimBrush}" />
+        <Grid Margin="0,2,0,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBox x:Name="PathBox" Grid.Column="0" />
+            <Button Grid.Column="1" Content="…" Margin="6,0,0,0" Padding="10,3" Click="OnBrowse" />
+        </Grid>
+
+        <TextBlock Text="Arguments" FontSize="11" Foreground="{StaticResource DimBrush}" />
+        <TextBox x:Name="ArgsBox" Margin="0,2,0,8" />
+
+        <Grid Margin="0,0,0,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0">
+                <TextBlock Text="Checkpoint" FontSize="11" Foreground="{StaticResource DimBrush}" />
+                <ComboBox x:Name="CheckpointBox" Margin="0,2,0,0" />
+            </StackPanel>
+            <StackPanel Grid.Column="2">
+                <TextBlock Text="Delay" FontSize="11" Foreground="{StaticResource DimBrush}" />
+                <Grid Margin="0,2,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBox x:Name="DelayBox" Grid.Column="0" />
+                    <ComboBox x:Name="DelayUnitBox" Grid.Column="1" Width="90" Margin="6,0,0,0">
+                        <ComboBoxItem Content="seconds" />
+                        <ComboBoxItem Content="minutes" />
+                    </ComboBox>
+                </Grid>
+            </StackPanel>
+        </Grid>
+
+        <Grid Margin="0,0,0,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0">
+                <TextBlock Text="Wait for app (same checkpoint)" FontSize="11" Foreground="{StaticResource DimBrush}" />
+                <ComboBox x:Name="WaitForBox" Margin="0,2,0,0" />
+            </StackPanel>
+            <StackPanel Grid.Column="2">
+                <TextBlock Text="…plus ready seconds" FontSize="11" Foreground="{StaticResource DimBrush}" />
+                <TextBox x:Name="ReadySecondsBox" Margin="0,2,0,0" />
+            </StackPanel>
+        </Grid>
+
+        <Grid Margin="0,0,0,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0">
+                <TextBlock Text="Shutdown on teardown" FontSize="11" Foreground="{StaticResource DimBrush}" />
+                <ComboBox x:Name="ShutdownBox" Margin="0,2,0,0">
+                    <ComboBoxItem Content="default" />
+                    <ComboBoxItem Content="graceful" />
+                    <ComboBoxItem Content="kill" />
+                    <ComboBoxItem Content="leave" />
+                </ComboBox>
+            </StackPanel>
+            <StackPanel Grid.Column="2">
+                <TextBlock Text="Graceful timeout (s)" FontSize="11" Foreground="{StaticResource DimBrush}" />
+                <TextBox x:Name="TimeoutBox" Margin="0,2,0,0" />
+            </StackPanel>
+        </Grid>
+
+        <StackPanel Margin="0,0,0,8">
+            <TextBlock Text="If already running" FontSize="11" Foreground="{StaticResource DimBrush}" />
+            <ComboBox x:Name="AlreadyRunningBox" Margin="0,2,0,0">
+                <ComboBoxItem Content="skip" />
+                <ComboBoxItem Content="adopt" />
+                <ComboBoxItem Content="startAnother" />
+            </ComboBox>
+        </StackPanel>
+
+        <CheckBox x:Name="RestartBox" Content="Restart if crashed (max 3 attempts)" Margin="0,0,0,4" />
+        <CheckBox x:Name="ShellBox" Content="Launch via shell (required for URIs; auto-detected)" Margin="0,0,0,4" />
+        <CheckBox x:Name="AdminBox" Content="Run as administrator (UAC prompt; e.g. REX Atmos Core)" Margin="0,0,0,12" />
+
+        <TextBlock x:Name="ErrorText" Foreground="{StaticResource FailedTextBrush}"
+                   TextWrapping="Wrap" Margin="0,0,0,8" Visibility="Collapsed" />
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Button x:Name="DeleteButton" Grid.Column="0" Content="Delete" Click="OnDelete"
+                    Foreground="{StaticResource FailedTextBrush}" />
+            <Button Grid.Column="2" Content="Cancel" Margin="0,0,8,0" Click="OnCancel" MinWidth="80" />
+            <Button Grid.Column="3" Content="Save" Click="OnSave" MinWidth="80"
+                    Background="#1F4258" BorderBrush="{StaticResource AccentBrush}" />
+        </Grid>
+    </StackPanel>
+</Window>
