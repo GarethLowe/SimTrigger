@@ -143,9 +143,10 @@ public sealed class SimConnectStateSource : ISimStateSource
 
     private bool TryConnect()
     {
+        EventWaitHandle? signal = null;
         try
         {
-            var signal = new EventWaitHandle(false, EventResetMode.AutoReset);
+            signal = new EventWaitHandle(false, EventResetMode.AutoReset);
             var sim = new MsSimConnect("SimLauncher", IntPtr.Zero, 0, signal, 0);
 
             sim.OnRecvOpen += OnRecvOpen;
@@ -160,19 +161,53 @@ public sealed class SimConnectStateSource : ISimStateSource
                 _sim = sim;
                 _signal = signal;
             }
+            _failedConnects = 0;
             return true;
         }
         catch (COMException)
         {
             // Expected until the sim is up and accepting connections.
             _log.LogDebug("SimConnect not available yet; will retry");
+            ReleaseFailedAttempt(signal);
             return false;
         }
         catch (Exception ex)
         {
             _log.LogWarning(ex, "Unexpected error creating SimConnect connection; will retry");
+            ReleaseFailedAttempt(signal);
             return false;
         }
+    }
+
+    /// <summary>Failed connect attempts between forced finalizer drains. See <see cref="ReleaseFailedAttempt"/>.</summary>
+    private const int OrphanDrainEvery = 10;
+
+    private int _failedConnects;
+
+    /// <summary>
+    /// Reclaims what a failed connect attempt strands.
+    ///
+    /// The SDK's SimConnect constructor allocates its native connection state before
+    /// SimConnect_Open fails and throws, so the half-built object never reaches us: it is
+    /// unreachable and undisposable, and only its finalizer can free it. Its managed
+    /// footprint is ~360 bytes, so while the sim is down the GC sees no pressure and never
+    /// runs — every attempt then strands ~600 KB of native memory. Measured from a heap
+    /// dump: 2,190 orphans (0 GC roots, 815 awaiting finalization) ≈ 1.3 GB after ~3 h
+    /// idle, against a 38 MB managed heap.
+    ///
+    /// Forcing finalization is the only way to release a reference we do not hold. Doing it
+    /// every Nth failure instead of every failure keeps the collections rare (~1/min at the
+    /// default 5 s poll) while capping the strand at a few MB.
+    /// </summary>
+    private void ReleaseFailedAttempt(EventWaitHandle? signal)
+    {
+        signal?.Dispose(); // the ctor threw, so nothing native holds it
+        if (++_failedConnects % OrphanDrainEvery != 0)
+        {
+            return;
+        }
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
     }
 
     private void Pump(CancellationToken ct)

@@ -9,7 +9,6 @@ using SimLauncher.Core.Config;
 using SimLauncher.Core.Engine;
 using SimLauncher.Core.Processes;
 using SimLauncher.SimConnect;
-using SimLauncher.Traffic;
 
 namespace SimLauncher.App;
 
@@ -18,11 +17,17 @@ public partial class App : System.Windows.Application
     private IHost? _host;
     private TrayIconService? _tray;
     private MainWindow? _window;
-    private TrafficWindow? _trafficWindow;
 
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        // Without this, a UI-thread exception kills the process with nothing in our own
+        // log — a past window crash was only visible in Windows Event Viewer.
+        DispatcherUnhandledException += (_, args) =>
+            Serilog.Log.Fatal(args.Exception, "Unhandled dispatcher exception; process will terminate");
+        AppDomain.CurrentDomain.UnhandledException += (_, args) =>
+            Serilog.Log.Fatal(args.ExceptionObject as Exception, "Unhandled exception; process will terminate");
 
         var logDir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
@@ -32,27 +37,11 @@ public partial class App : System.Windows.Application
             .UseSerilog((_, cfg) => cfg
                 .MinimumLevel.Debug()
                 .WriteTo.Logger(lc => lc
-                    // The per-tick detection trace (Debug) is high-volume and lives only in
-                    // the CLEF file; Information+ detection events (conflict lifecycle,
-                    // player-eligibility warnings) still reach the main log and UI.
-                    .Filter.ByExcluding(e =>
-                        Serilog.Filters.Matching.FromSource(TrafficMonitorService.DetectionLoggerName)(e)
-                        && e.Level < Serilog.Events.LogEventLevel.Information)
                     .WriteTo.File(Path.Combine(logDir, "simlauncher-.log"),
                         rollingInterval: RollingInterval.Day,
                         retainedFileCountLimit: 14,
                         outputTemplate: "{Timestamp:HH:mm:ss.fff} [{Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}")
-                    .WriteTo.Sink(UiLogSink.Instance))
-                // Structured detection log (CLEF/newline-delimited JSON): every tick, every
-                // near-pair gate decision, eligibility transitions. UTC @t plus the feed's
-                // SimTime property allow cross-correlation with BeyondATC's own logs.
-                .WriteTo.Logger(lc => lc
-                    .Filter.ByIncludingOnly(
-                        Serilog.Filters.Matching.FromSource(TrafficMonitorService.DetectionLoggerName))
-                    .WriteTo.File(new Serilog.Formatting.Compact.CompactJsonFormatter(),
-                        Path.Combine(logDir, "traffic-.clef"),
-                        rollingInterval: RollingInterval.Day,
-                        retainedFileCountLimit: 7)))
+                    .WriteTo.Sink(UiLogSink.Instance)))
             .ConfigureServices(services =>
             {
                 services.AddSingleton<ConfigStore>();
@@ -65,15 +54,6 @@ public partial class App : System.Windows.Application
                 services.AddSingleton<SessionCoordinator>();
                 services.AddSingleton<MainViewModel>();
                 services.AddSingleton<MainWindow>();
-                services.AddSingleton(sp =>
-                {
-                    var config = sp.GetRequiredService<ConfigStore>().Current.Traffic;
-                    Uri.TryCreate(config.WebSocketUrl, UriKind.Absolute, out var uri);
-                    return new TrafficMonitorService(
-                        sp.GetRequiredService<Microsoft.Extensions.Logging.ILoggerFactory>(),
-                        uri);
-                });
-                services.AddSingleton<TrafficViewModel>();
             })
             .Build();
 
@@ -85,13 +65,6 @@ public partial class App : System.Windows.Application
 
         var coordinator = _host.Services.GetRequiredService<SessionCoordinator>();
         coordinator.Initialize();
-
-        // The traffic link runs independently of process management: if BeyondATC
-        // isn't up it just shows "disconnected" and keeps retrying.
-        var traffic = _host.Services.GetRequiredService<TrafficMonitorService>();
-        ApplyTrafficSettings(traffic, config.Current);
-        config.ConfigChanged += cfg => ApplyTrafficSettings(traffic, cfg);
-        traffic.Start();
 
         _window = _host.Services.GetRequiredService<MainWindow>();
         var viewModel = _host.Services.GetRequiredService<MainViewModel>();
@@ -105,38 +78,6 @@ public partial class App : System.Windows.Application
         {
             _tray.ShowBalloon("SimLauncher", "Running in the tray. Double-click to open.");
         }
-    }
-
-    private static void ApplyTrafficSettings(TrafficMonitorService traffic, LauncherConfig config)
-    {
-        var t = config.Traffic;
-        traffic.UpdateSettings(
-            new ConflictThresholds(t.ConflictHorizontalNm, t.ConflictVerticalFt,
-                t.CautionHorizontalNm, t.CautionVerticalFt),
-            new AutoCullOptions
-            {
-                Enabled = t.AutoCull,
-                DryRun = t.DryRun,
-                SustainSeconds = t.AutoCullSustainSeconds,
-                CooldownSeconds = t.AutoCullCooldownSeconds,
-            },
-            t.ConflictScope switch
-            {
-                ConflictScopeSetting.All => ConflictScope.All,
-                ConflictScopeSetting.AiVsAi => ConflictScope.AiVsAi,
-                _ => ConflictScope.PlayerVsAi,
-            });
-    }
-
-    public void OpenTrafficWindow()
-    {
-        _trafficWindow ??= new TrafficWindow(_host!.Services.GetRequiredService<TrafficViewModel>());
-        _trafficWindow.Show();
-        if (_trafficWindow.WindowState == WindowState.Minimized)
-        {
-            _trafficWindow.WindowState = WindowState.Normal;
-        }
-        _trafficWindow.Activate();
     }
 
     private void OpenWindow()
@@ -197,11 +138,6 @@ public partial class App : System.Windows.Application
         if (_window is not null)
         {
             _window.AllowClose = true;
-        }
-        if (_trafficWindow is not null)
-        {
-            _trafficWindow.AllowClose = true;
-            _trafficWindow.Close();
         }
         _tray?.Dispose();
         if (_host is { } host)

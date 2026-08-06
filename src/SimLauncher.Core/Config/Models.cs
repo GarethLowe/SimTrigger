@@ -125,54 +125,6 @@ public sealed class MsfsConfig
         || Path.StartsWith("shell:", StringComparison.OrdinalIgnoreCase);
 }
 
-[JsonConverter(typeof(JsonStringEnumConverter))]
-public enum ConflictScopeSetting
-{
-    /// <summary>Only pairs involving the player aircraft.</summary>
-    PlayerVsAi,
-    /// <summary>Every airborne pair.</summary>
-    All,
-    /// <summary>Only AI-vs-AI pairs.</summary>
-    AiVsAi,
-}
-
-/// <summary>Settings for the BeyondATC live traffic monitor panel.</summary>
-public sealed class TrafficMonitorConfig
-{
-    /// <summary>Mapbox public access token (pk.*). Falls back to the MAPBOX_TOKEN env var when empty.</summary>
-    public string MapboxToken { get; set; } =
-        "";
-
-    /// <summary>BeyondATC's local traffic WebSocket. Only listens during an active flight.</summary>
-    public string WebSocketUrl { get; set; } = "ws://127.0.0.1:41717/";
-
-    // Conflict = both thresholds breached while closing; Caution = the wider band.
-    public double ConflictHorizontalNm { get; set; } = 3.0;
-    public double ConflictVerticalFt { get; set; } = 1000;
-    public double CautionHorizontalNm { get; set; } = 5.0;
-    public double CautionVerticalFt { get; set; } = 1500;
-
-    /// <summary>
-    /// Which pairs the conflict check examines: playerVsAi (default — only conflicts
-    /// against your aircraft), all, or aiVsAi.
-    /// </summary>
-    public ConflictScopeSetting ConflictScope { get; set; } = ConflictScopeSetting.PlayerVsAi;
-
-    /// <summary>Automatically despawn the intruder of a sustained conflict. Off by default.</summary>
-    public bool AutoCull { get; set; }
-
-    /// <summary>While true, auto-cull only logs what it would do.</summary>
-    public bool DryRun { get; set; } = true;
-
-    public double AutoCullSustainSeconds { get; set; } = 2;
-    public double AutoCullCooldownSeconds { get; set; } = 120;
-
-    [JsonIgnore]
-    public string EffectiveMapboxToken => string.IsNullOrWhiteSpace(MapboxToken)
-        ? Environment.GetEnvironmentVariable("MAPBOX_TOKEN") ?? ""
-        : MapboxToken;
-}
-
 public sealed class LauncherConfig
 {
     public string ActiveProfile { get; set; } = "";
@@ -183,7 +135,6 @@ public sealed class LauncherConfig
 
     public MsfsConfig Msfs { get; set; } = new();
     public SimConnectionConfig SimConnection { get; set; } = new();
-    public TrafficMonitorConfig Traffic { get; set; } = new();
     public List<ProfileConfig> Profiles { get; set; } = new();
 
     public ProfileConfig? FindActiveProfile()

@@ -13,7 +13,8 @@ publish/
 # Claude Code local (per-machine permission grants)
 .claude/settings.local.json
 
-# SimConnect SDK DLLs are not redistributable; they only ever land in bin/, but
-# make sure a stray copy never gets committed either.
+# SimConnect SDK DLLs are never committed — they are Microsoft SDK components and
+# not redistributable. This covers the vendored copies in libs/SimConnect/ too:
+# that directory is a local build fallback only (see libs/SimConnect/README.md).
 SimConnect.dll
 Microsoft.FlightSimulator.SimConnect.dll

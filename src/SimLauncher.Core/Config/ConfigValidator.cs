@@ -47,32 +47,8 @@ public static class ConfigValidator
             errors.Add("simConnection.debounceSeconds must not be negative.");
         }
 
-        ValidateTraffic(config.Traffic, errors);
 
         return errors;
-    }
-
-    private static void ValidateTraffic(TrafficMonitorConfig traffic, List<string> errors)
-    {
-        if (!Uri.TryCreate(traffic.WebSocketUrl, UriKind.Absolute, out var uri)
-            || (uri.Scheme != "ws" && uri.Scheme != "wss"))
-        {
-            errors.Add("traffic.webSocketUrl must be a ws:// or wss:// URL.");
-        }
-        if (traffic.ConflictHorizontalNm <= 0 || traffic.ConflictVerticalFt <= 0
-            || traffic.CautionHorizontalNm <= 0 || traffic.CautionVerticalFt <= 0)
-        {
-            errors.Add("traffic conflict/caution thresholds must be positive.");
-        }
-        if (traffic.CautionHorizontalNm < traffic.ConflictHorizontalNm
-            || traffic.CautionVerticalFt < traffic.ConflictVerticalFt)
-        {
-            errors.Add("traffic caution thresholds must be at least as wide as the conflict thresholds.");
-        }
-        if (traffic.AutoCullSustainSeconds < 0 || traffic.AutoCullCooldownSeconds < 0)
-        {
-            errors.Add("traffic auto-cull timings must not be negative.");
-        }
     }
 
     private static void ValidateProfile(ProfileConfig profile, List<string> errors)

@@ -24,18 +24,6 @@
       "flightMax": 10
     }
   },
-  "traffic": {
-    "mapboxToken": "pk.your-mapbox-public-token",
-    "webSocketUrl": "ws://127.0.0.1:41717/",
-    "conflictHorizontalNm": 3.0,
-    "conflictVerticalFt": 1000,
-    "cautionHorizontalNm": 5.0,
-    "cautionVerticalFt": 1500,
-    "autoCull": false,
-    "dryRun": true,
-    "autoCullSustainSeconds": 2,
-    "autoCullCooldownSeconds": 120
-  },
   "profiles": [
     {
       "name": "Full IFR session",

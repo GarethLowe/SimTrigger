@@ -40,9 +40,7 @@ manual Stop, auto-arm stays suppressed until the sim exits, so it won't fight yo
 | `SimLauncher.Core` | State machine, checkpoint engine, process management, config. No WPF, no SimConnect. Everything arrives via `ISimStateSource` / `IProcessManager`, so it is fully unit-testable |
 | `SimLauncher.SimConnect` | `ISimStateSource` implementation over `Microsoft.FlightSimulator.SimConnect` |
 | `SimLauncher.App` | WPF tray app + timeline UI, thin layer over Core |
-| `SimLauncher.Traffic` | BeyondATC traffic WebSocket client, aircraft store, conflict detector, cull policy. No UI — see [docs/traffic-monitor.md](docs/traffic-monitor.md) |
 | `SimLauncher.Core.Tests` | xUnit suite driving Core with fakes and a fake clock |
-| `SimLauncher.Traffic.Tests` | xUnit suite for protocol parsing, conflict math and the cull policy |
 
 ## Building
 
@@ -151,9 +149,7 @@ menu/loading values.
 
 Serilog rolling files in `%APPDATA%\SimLauncher\logs\` (14 days kept), plus the live
 session log in the Debug panel. Every state transition, checkpoint fire and process
-start/stop is logged. Traffic conflict detection additionally writes a structured
-`traffic-<date>.clef` JSON trace (7 days kept) — see
-[docs/traffic-monitor.md](docs/traffic-monitor.md).
+start/stop is logged.
 
 ## Smoke test without flying
 

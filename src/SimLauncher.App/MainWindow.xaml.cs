@@ -29,9 +29,6 @@ public partial class MainWindow : Window
         };
     }
 
-    private void OnOpenTrafficMonitor(object sender, RoutedEventArgs e)
-        => ((App)System.Windows.Application.Current).OpenTrafficWindow();
-
     private bool ShowEditDialog(Core.Config.AppConfig draft, bool isExisting)
     {
         var dialog = new EditEventWindow(draft, isExisting, _viewModel) { Owner = this };

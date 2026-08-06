@@ -56,8 +56,6 @@
                 <CheckBox Content="Launch on Windows startup" FontSize="11" Margin="2,6,0,0"
                           Foreground="{StaticResource DimBrush}"
                           IsChecked="{Binding LaunchOnStartup}" />
-                <Button Content="Traffic Monitor" FontSize="11" Padding="8,3" Margin="0,6,0,0"
-                        HorizontalAlignment="Left" Click="OnOpenTrafficMonitor" />
             </StackPanel>
         </Grid>
 

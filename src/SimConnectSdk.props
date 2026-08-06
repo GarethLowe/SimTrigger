@@ -5,13 +5,18 @@
     <Reference> items in transitive project references are copied to the output but
     never recorded in the exe's deps.json — and the .NET host then refuses to load
     the assembly at runtime.
-    Resolution order: -p:SimConnectSdkDir=<path>, %MSFS2024_SDK%, %MSFS_SDK%.
+    Resolution order: -p:SimConnectSdkDir=<path>, %MSFS2024_SDK%, %MSFS_SDK%,
+    then the vendored copies in libs/SimConnect/ (see the README there), so
+    builds work on machines without the MSFS SDK installed.
   -->
   <PropertyGroup>
     <SimConnectSdkDir Condition="'$(SimConnectSdkDir)' == '' AND '$(MSFS2024_SDK)' != ''">$(MSFS2024_SDK)</SimConnectSdkDir>
     <SimConnectSdkDir Condition="'$(SimConnectSdkDir)' == '' AND '$(MSFS_SDK)' != ''">$(MSFS_SDK)</SimConnectSdkDir>
     <SimConnectManagedDll>$(SimConnectSdkDir)\SimConnect SDK\lib\managed\Microsoft.FlightSimulator.SimConnect.dll</SimConnectManagedDll>
     <SimConnectNativeDll>$(SimConnectSdkDir)\SimConnect SDK\lib\SimConnect.dll</SimConnectNativeDll>
+    <SimConnectVendoredDir>$(MSBuildThisFileDirectory)..\libs\SimConnect</SimConnectVendoredDir>
+    <SimConnectManagedDll Condition="!Exists('$(SimConnectManagedDll)')">$(SimConnectVendoredDir)\Microsoft.FlightSimulator.SimConnect.dll</SimConnectManagedDll>
+    <SimConnectNativeDll Condition="!Exists('$(SimConnectNativeDll)')">$(SimConnectVendoredDir)\SimConnect.dll</SimConnectNativeDll>
     <SimConnectAvailable>false</SimConnectAvailable>
     <SimConnectAvailable Condition="Exists('$(SimConnectManagedDll)')">true</SimConnectAvailable>
   </PropertyGroup>
