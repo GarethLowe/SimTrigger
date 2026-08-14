@@ -84,5 +84,11 @@ public sealed class LocalApiTests : IDisposable
         Assert.False(stopped.GetProperty("sessionActive").GetBoolean());
 
         Assert.Equal(System.Net.HttpStatusCode.NotFound, (await _http.GetAsync("/nope")).StatusCode);
+
+        // Long press on the Stream Deck key: surfaces the window via the host callback.
+        var shown = 0;
+        _api.ShowWindow = () => shown++;
+        await GetAsync("/show");
+        Assert.Equal(1, shown);
     }
 }

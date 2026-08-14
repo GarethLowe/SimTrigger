@@ -66,7 +66,10 @@ public partial class App : System.Windows.Application
 
         var coordinator = _host.Services.GetRequiredService<SessionCoordinator>();
         coordinator.Initialize();
-        _host.Services.GetRequiredService<LocalApi>().Start();
+        var api = _host.Services.GetRequiredService<LocalApi>();
+        // /show arrives on a listener thread; OpenWindow touches WPF, so hop the dispatcher.
+        api.ShowWindow = () => Dispatcher.Invoke(OpenWindow);
+        api.Start();
 
         _window = _host.Services.GetRequiredService<MainWindow>();
         var viewModel = _host.Services.GetRequiredService<MainViewModel>();

@@ -32,6 +32,17 @@ Newest first. One entry per work session; sections only where they add clarity.
 - Requires a rebuild plus copying the plugin folder to
   `%APPDATA%\Elgato\StreamDeck\Plugins\` and restarting the Stream Deck app.
 
+### Changed (same session, after first pass)
+
+- **Key art is now action-led**: a white `airplane-takeoff` glyph when the next press
+  launches, red `airplane-remove` when it tears down, so the key says what it will do
+  rather than only what is happening. Status did not get lost — it moved to the label
+  colour (grey/amber/blue/green), which is why the coloured status disc is gone.
+- **Long press (≥500 ms) opens the SimLauncher window** via a new `/show` route. Stream
+  Deck has no long-press event for keypad keys, so the plugin times `keyDown`→`keyUp`
+  itself. `LocalApi.ShowWindow` is a callback the WPF host sets; Core stays WPF-free and
+  the host marshals to the dispatcher, since /show arrives on a listener thread.
+
 ### Repository
 
 - **History rewritten; all commit SHAs changed.** The initial commit hardcoded a Mapbox

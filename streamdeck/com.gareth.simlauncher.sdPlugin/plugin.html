@@ -10,11 +10,13 @@
 const PORT = 8731;              // must match localApiPort in config.json
 const CLOSE_MSFS_ON_STOP = false; // true => stopping the stack also asks MSFS to close
 const POLL_MS = 1000;
+const LONG_PRESS_MS = 500;      // hold this long to open the SimLauncher window instead
 
 const API = 'http://127.0.0.1:' + PORT;
 const contexts = new Set();
 let ws = null;
 let lastStatus = undefined; // undefined = launcher unreachable
+let pressedAt = 0;
 
 // Short key labels per SessionPhase (SimLauncher.Core.SessionPhase).
 const PHASE = {
@@ -32,8 +34,11 @@ function connectElgatoStreamDeckSocket(inPort, inUUID, inRegisterEvent) {
       draw(msg.context);
     } else if (msg.event === 'willDisappear') {
       contexts.delete(msg.context);
+    } else if (msg.event === 'keyDown') {
+      pressedAt = Date.now();
     } else if (msg.event === 'keyUp') {
-      press(msg.context);
+      // Stream Deck has no long-press event for keypads, so time it ourselves.
+      press(msg.context, Date.now() - pressedAt >= LONG_PRESS_MS);
     }
   };
 }
@@ -50,9 +55,11 @@ async function call(path) {
   return res.json();
 }
 
-async function press(context) {
+async function press(context, isLongPress) {
   try {
-    lastStatus = await call('/toggle' + (CLOSE_MSFS_ON_STOP ? '?msfs=1' : ''));
+    lastStatus = await call(isLongPress
+      ? '/show'
+      : '/toggle' + (CLOSE_MSFS_ON_STOP ? '?msfs=1' : ''));
     send('showOk', context);
     drawAll();
   } catch (err) {
@@ -71,32 +78,41 @@ async function poll() {
   drawAll();
 }
 
-// Colour + label per state. Grey = nothing running, amber = coming up,
-// blue = sim ready, green = session driving the stack.
+// Material Design Icons, 24x24 paths: airplane-takeoff / airplane-remove.
+const TAKEOFF = 'M2.5,19H21.5V21H2.5V19M22.07,9.64C21.86,8.84 21.03,8.36 20.23,8.58L14.92,10L8,3.57L6.09,4.08L10.23,11.25L5.26,12.58L3.29,11.04L1.84,11.43L3.66,14.59L4.43,15.92L6.03,15.5L11.34,14.07L15.69,12.91L21,11.5C21.81,11.26 22.28,10.44 22.07,9.64Z';
+const REMOVE = 'M15.97 13.83C15.08 14.35 14.34 15.09 13.82 16L11.55 11.63L7.66 15.5L8 18L6.95 19.06L5.18 15.87L2 14.11L3.06 13.05L5.54 13.4L9.43 9.5L2 5.62L3.41 4.21L12.61 6.33L16.5 2.44C17.08 1.85 18.03 1.85 18.62 2.44C19.2 3.03 19.2 4 18.62 4.56L14.73 8.45L15.97 13.83M22.54 16.88L21.12 15.47L19 17.59L16.88 15.47L15.47 16.88L17.59 19L15.47 21.12L16.88 22.54L19 20.41L21.12 22.54L22.54 21.12L20.41 19L22.54 16.88Z';
+
+// The glyph shows what the NEXT press does — white takeoff = launch, red
+// airplane-remove = shut the stack down. The label colour carries status:
+// grey = nothing running, amber = coming up, blue = sim ready, green = flying.
 function view(s) {
-  if (!s) { return { colour: '#3a3f4a', label: '—', title: 'launcher\noffline' }; }
+  if (!s) { return { glyph: TAKEOFF, ink: '#6b7280', colour: '#6b7280', label: '—', title: 'launcher\noffline' }; }
   if (s.sessionActive) {
     const flying = s.phase === 'InCockpit' || s.phase === 'WorldLoaded';
     return {
-      colour: flying ? '#2e9e4f' : '#4da3ff',
+      glyph: REMOVE,
+      ink: '#e5484d',
+      colour: flying ? '#4ac26b' : '#4da3ff',
       label: PHASE[s.phase] || s.phase,
       title: s.appsRunning + '/' + s.appsTotal + ' apps',
     };
   }
-  if (s.connected) { return { colour: '#4da3ff', label: 'SIM', title: 'connected\npress to arm' }; }
-  if (s.simRunning) { return { colour: '#c8901e', label: 'SIM', title: 'starting…' }; }
-  return { colour: '#3a3f4a', label: 'OFF', title: 'press to\nlaunch' };
+  if (s.connected) { return { glyph: TAKEOFF, ink: '#ffffff', colour: '#4da3ff', label: 'SIM', title: 'press to arm' }; }
+  if (s.simRunning) { return { glyph: TAKEOFF, ink: '#ffffff', colour: '#e0a020', label: 'SIM', title: 'starting…' }; }
+  return { glyph: TAKEOFF, ink: '#ffffff', colour: '#9aa4b2', label: 'OFF', title: 'press to launch' };
 }
 
 function draw(context) {
   const v = view(lastStatus);
-  const fontSize = v.label.length > 4 ? 22 : 28;
+  const fontSize = v.label.length > 4 ? 22 : 26;
   const svg =
     '<svg xmlns="http://www.w3.org/2000/svg" width="144" height="144" viewBox="0 0 144 144">' +
       '<rect width="144" height="144" rx="22" fill="#1c1f26"/>' +
-      '<circle cx="72" cy="60" r="34" fill="' + v.colour + '"/>' +
-      '<text x="72" y="70" font-family="Arial, sans-serif" font-size="' + fontSize + '"' +
-        ' font-weight="bold" fill="#ffffff" text-anchor="middle">' + v.label + '</text>' +
+      // 24x24 glyph scaled x3 to 72px, centred at the top; label sits below it and
+      // the Stream Deck title renders under that, so nothing overlaps.
+      '<path transform="translate(36,16) scale(3)" fill="' + v.ink + '" d="' + v.glyph + '"/>' +
+      '<text x="72" y="116" font-family="Arial, sans-serif" font-size="' + fontSize + '"' +
+        ' font-weight="bold" fill="' + v.colour + '" text-anchor="middle">' + v.label + '</text>' +
     '</svg>';
   send('setImage', context, { image: 'data:image/svg+xml;charset=utf8,' + encodeURIComponent(svg) });
   send('setTitle', context, { title: v.title });

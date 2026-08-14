@@ -158,6 +158,7 @@ same trust level as clicking the tray icon). Set `localApiPort: 0` to turn it of
 | `/start` | Same as the Launch button: start MSFS if needed, arm the session |
 | `/stop` | Session teardown (managed apps shut down per their `shutdown` mode) |
 | `/toggle` | `/start` or `/stop` depending on current state |
+| `/show` | Bring the SimLauncher window up |
 
 `/stop` and `/toggle` accept `?msfs=1`, which additionally asks MSFS to close its main
 window after teardown. It is never killed — a forced kill on the sim risks a corrupt state.
@@ -168,8 +169,12 @@ Copy `streamdeck\com.gareth.simlauncher.sdPlugin` into
 `%APPDATA%\Elgato\StreamDeck\Plugins\` and restart the Stream Deck app. Drag **Sim Stack**
 (category *SimLauncher*) onto a key. It is plain HTML/JS — no build step, edit in place.
 
-One key does everything: the icon polls status once a second, and pressing it launches or
-shuts down the stack.
+One key does everything. It polls status once a second, and the **glyph shows what the
+next press will do**: a white takeoff plane means press to launch, a red
+airplane-remove means press to shut the stack down. **Hold it for half a second** to open
+the SimLauncher window instead.
+
+The **label colour** carries status, so you can read the key without pressing it:
 
 | Key | Meaning |
 |-|-|
@@ -180,9 +185,9 @@ shuts down the stack.
 | Blue `ARM`/`WAIT`/`MENU` | Session active, not in a flight |
 | Green `WORLD`/`FLY` | In the world / in the cockpit |
 
-The title line under the icon shows `running/total` managed apps. To make the key also
-close MSFS on shutdown, set `CLOSE_MSFS_ON_STOP = true` at the top of `plugin.html`
-(and `PORT` there must match `localApiPort`).
+The title line under the icon shows `running/total` managed apps. Three constants at the
+top of `plugin.html` are the knobs: `PORT` (must match `localApiPort`), `LONG_PRESS_MS`,
+and `CLOSE_MSFS_ON_STOP` — set that last one true to make shutdown also close MSFS.
 
 ## Logs
 

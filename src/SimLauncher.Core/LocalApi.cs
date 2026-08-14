@@ -17,6 +17,7 @@ namespace SimLauncher.Core;
 ///   /start   -> launch MSFS if needed + arm the session
 ///   /stop    -> teardown managed apps; ?msfs=1 also asks MSFS to close
 ///   /toggle  -> /start or /stop depending on current state
+///   /show    -> bring the SimLauncher window up (no-op if no host wired it)
 /// </summary>
 public sealed class LocalApi : IDisposable
 {
@@ -25,6 +26,12 @@ public sealed class LocalApi : IDisposable
     private readonly ILogger<LocalApi> _log;
     private readonly CancellationTokenSource _cts = new();
     private HttpListener? _listener;
+
+    /// <summary>
+    /// Set by the UI host to surface its main window on /show. Called from a request
+    /// thread, so the host is responsible for marshalling to its UI thread.
+    /// </summary>
+    public Action? ShowWindow { get; set; }
 
     public LocalApi(SessionCoordinator coordinator, IProcessManager procs, ILogger<LocalApi> log)
     {
@@ -112,6 +119,11 @@ public sealed class LocalApi : IDisposable
                     {
                         CloseMsfs();
                     }
+                    await WriteAsync(ctx, 200, Status()).ConfigureAwait(false);
+                    return;
+
+                case "/show":
+                    ShowWindow?.Invoke();
                     await WriteAsync(ctx, 200, Status()).ConfigureAwait(false);
                     return;
 
