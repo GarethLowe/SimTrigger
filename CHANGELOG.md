@@ -32,6 +32,17 @@ Newest first. One entry per work session; sections only where they add clarity.
 - Requires a rebuild plus copying the plugin folder to
   `%APPDATA%\Elgato\StreamDeck\Plugins\` and restarting the Stream Deck app.
 
+### Repository
+
+- **History rewritten; all commit SHAs changed.** The initial commit hardcoded a Mapbox
+  `pk.*` token in the (since-deleted) `TrafficMonitorConfig`, which GitHub push protection
+  blocked. `git filter-branch` blanked that string literal across history and re-signed
+  every commit; the current tree is byte-identical to before the rewrite. Any pre-existing
+  clone must be re-cloned rather than pulled.
+- Origin moved from the private GitLab repo to `git@github.com:GarethLowe/SimTrigger.git`.
+  The GitLab remote was removed. The token was live on GitLab for a month, so rewriting
+  history does not un-expose it — rotate it in Mapbox if it still exists.
+
 ## 2026-08-06 — Remove traffic monitor; stop committing SimConnect DLLs
 
 ### Removed
