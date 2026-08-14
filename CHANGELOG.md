@@ -2,6 +2,36 @@
 
 Newest first. One entry per work session; sections only where they add clarity.
 
+## 2026-08-14 — Stream Deck integration via a loopback control API
+
+### Added
+
+- **`LocalApi`** (`SimLauncher.Core`): an `HttpListener` bound to `http://127.0.0.1:<port>/`
+  exposing `/status`, `/start`, `/stop`, `/toggle`. Started from `App.OnStartup` after the
+  coordinator initialises; disposed with the DI container. Loopback-specific prefixes need
+  no URL ACL, so the app still runs unelevated. No auth by design — any local process can
+  already start the same apps, so this is the same trust level as the tray icon; the
+  off-switch is `localApiPort: 0`.
+- **`localApiPort` config key** (default 8731). Hot-reload does *not* rebind the listener;
+  changing the port needs a restart.
+- **Stream Deck plugin** at `streamdeck/com.gareth.simlauncher.sdPlugin/`. Deliberately the
+  HTML/JS plugin type: Stream Deck runs `plugin.html` directly, so there is no Node
+  toolchain, no bundler, and no second build to keep in sync with the app. It polls
+  `/status` every second and renders the key as an inline SVG data URI, so the whole status
+  vocabulary (offline / off / booting / connected / armed / in-flight) lives in one
+  `view()` function instead of a set of pre-baked PNG states. One key toggles the stack.
+- `LocalApiTests` covers the routing and JSON shape end to end against a real listener.
+
+### Notes
+
+- `/stop?msfs=1` (and the plugin's `CLOSE_MSFS_ON_STOP` flag, default off) asks MSFS to
+  close its main window after teardown. It never kills the sim: SimLauncher's standing rule
+  is that it does not own the sim's lifetime, and a forced kill risks a corrupt sim state.
+  With the flag off, pressing the key to shut down leaves MSFS running — intentional
+  asymmetry with launch, flip the flag if you want symmetry.
+- Requires a rebuild plus copying the plugin folder to
+  `%APPDATA%\Elgato\StreamDeck\Plugins\` and restarting the Stream Deck app.
+
 ## 2026-08-06 — Remove traffic monitor; stop committing SimConnect DLLs
 
 ### Removed

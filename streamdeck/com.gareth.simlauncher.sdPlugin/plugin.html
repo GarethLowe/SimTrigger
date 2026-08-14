@@ -1,0 +1,112 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>SimLauncher</title></head>
+<body>
+<script>
+// SimLauncher Stream Deck plugin.
+// Polls SimLauncher's loopback API for status, and toggles the stack on key press.
+// No build step: Stream Deck runs this page directly.
+
+const PORT = 8731;              // must match localApiPort in config.json
+const CLOSE_MSFS_ON_STOP = false; // true => stopping the stack also asks MSFS to close
+const POLL_MS = 1000;
+
+const API = 'http://127.0.0.1:' + PORT;
+const contexts = new Set();
+let ws = null;
+let lastStatus = undefined; // undefined = launcher unreachable
+
+// Short key labels per SessionPhase (SimLauncher.Core.SessionPhase).
+const PHASE = {
+  Idle: 'ARM', WaitingForSim: 'WAIT', SimRunning: 'SIM',
+  WorldLoaded: 'WORLD', InCockpit: 'FLY', InMenu: 'MENU', Ended: 'END',
+};
+
+function connectElgatoStreamDeckSocket(inPort, inUUID, inRegisterEvent) {
+  ws = new WebSocket('ws://127.0.0.1:' + inPort);
+  ws.onopen = () => ws.send(JSON.stringify({ event: inRegisterEvent, uuid: inUUID }));
+  ws.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+    if (msg.event === 'willAppear') {
+      contexts.add(msg.context);
+      draw(msg.context);
+    } else if (msg.event === 'willDisappear') {
+      contexts.delete(msg.context);
+    } else if (msg.event === 'keyUp') {
+      press(msg.context);
+    }
+  };
+}
+
+function send(event, context, payload) {
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({ event, context, payload }));
+  }
+}
+
+async function call(path) {
+  const res = await fetch(API + path, { method: 'POST', signal: AbortSignal.timeout(5000) });
+  if (!res.ok) { throw new Error('HTTP ' + res.status); }
+  return res.json();
+}
+
+async function press(context) {
+  try {
+    lastStatus = await call('/toggle' + (CLOSE_MSFS_ON_STOP ? '?msfs=1' : ''));
+    send('showOk', context);
+    drawAll();
+  } catch (err) {
+    // Launcher not running, or teardown failed — the key stays honest either way.
+    send('showAlert', context);
+  }
+}
+
+async function poll() {
+  try {
+    const res = await fetch(API + '/status', { signal: AbortSignal.timeout(2000) });
+    lastStatus = res.ok ? await res.json() : undefined;
+  } catch (err) {
+    lastStatus = undefined;
+  }
+  drawAll();
+}
+
+// Colour + label per state. Grey = nothing running, amber = coming up,
+// blue = sim ready, green = session driving the stack.
+function view(s) {
+  if (!s) { return { colour: '#3a3f4a', label: '—', title: 'launcher\noffline' }; }
+  if (s.sessionActive) {
+    const flying = s.phase === 'InCockpit' || s.phase === 'WorldLoaded';
+    return {
+      colour: flying ? '#2e9e4f' : '#4da3ff',
+      label: PHASE[s.phase] || s.phase,
+      title: s.appsRunning + '/' + s.appsTotal + ' apps',
+    };
+  }
+  if (s.connected) { return { colour: '#4da3ff', label: 'SIM', title: 'connected\npress to arm' }; }
+  if (s.simRunning) { return { colour: '#c8901e', label: 'SIM', title: 'starting…' }; }
+  return { colour: '#3a3f4a', label: 'OFF', title: 'press to\nlaunch' };
+}
+
+function draw(context) {
+  const v = view(lastStatus);
+  const fontSize = v.label.length > 4 ? 22 : 28;
+  const svg =
+    '<svg xmlns="http://www.w3.org/2000/svg" width="144" height="144" viewBox="0 0 144 144">' +
+      '<rect width="144" height="144" rx="22" fill="#1c1f26"/>' +
+      '<circle cx="72" cy="60" r="34" fill="' + v.colour + '"/>' +
+      '<text x="72" y="70" font-family="Arial, sans-serif" font-size="' + fontSize + '"' +
+        ' font-weight="bold" fill="#ffffff" text-anchor="middle">' + v.label + '</text>' +
+    '</svg>';
+  send('setImage', context, { image: 'data:image/svg+xml;charset=utf8,' + encodeURIComponent(svg) });
+  send('setTitle', context, { title: v.title });
+}
+
+function drawAll() {
+  contexts.forEach(draw);
+}
+
+setInterval(() => { if (contexts.size) { poll(); } }, POLL_MS);
+</script>
+</body>
+</html>

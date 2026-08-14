@@ -133,6 +133,9 @@ public sealed class LauncherConfig
     /// <summary>Arm a session automatically when a running sim is detected (SimConnect accepts).</summary>
     public bool AutoStartSessionWhenSimDetected { get; set; } = true;
 
+    /// <summary>Loopback HTTP control port (Stream Deck etc.). 0 disables the endpoint.</summary>
+    public int LocalApiPort { get; set; } = 8731;
+
     public MsfsConfig Msfs { get; set; } = new();
     public SimConnectionConfig SimConnection { get; set; } = new();
     public List<ProfileConfig> Profiles { get; set; } = new();

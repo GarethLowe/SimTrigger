@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="144" height="144" viewBox="0 0 144 144">
+  <rect width="144" height="144" rx="22" fill="#1c1f26"/>
+  <circle cx="72" cy="72" r="30" fill="#3a3f4a"/>
+  <text x="72" y="82" font-family="Arial, sans-serif" font-size="26" font-weight="bold"
+        fill="#e8eaed" text-anchor="middle">SIM</text>
+</svg>

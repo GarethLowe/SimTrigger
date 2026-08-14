@@ -88,6 +88,7 @@ Top level:
 |-|-|
 | `activeProfile` | Name of the profile in use |
 | `autoStartSessionWhenSimDetected` | Auto-arm a session when a running sim is detected (default true) |
+| `localApiPort` | Loopback control port for Stream Deck etc. (default 8731; `0` disables) |
 | `msfs.path` | How the Launch button starts the sim: exe path, MS Store shell URI, or steam:// command |
 | `msfs.processNames` | Process names used to detect a running sim (default `FlightSimulator2024`, `FlightSimulator`) |
 | `simConnection.pollIntervalSeconds` | SimConnect connection poll interval (default 5) |
@@ -144,6 +145,44 @@ before trusting the timeline:**
 Known quirk this design works around: MSFS sometimes fires `FlightLoaded` during menu
 transitions, so World Load additionally requires the camera to have left the
 menu/loading values.
+
+## Stream Deck (and other external control)
+
+SimLauncher serves a JSON control endpoint on `http://127.0.0.1:8731/` (loopback only —
+no URL ACL needed, not reachable off the machine, no auth: any local process can drive it,
+same trust level as clicking the tray icon). Set `localApiPort: 0` to turn it off.
+
+| Route | Effect |
+|-|-|
+| `/status` | `{simRunning, connected, sessionActive, phase, profile, appsRunning, appsTotal, apps[]}` |
+| `/start` | Same as the Launch button: start MSFS if needed, arm the session |
+| `/stop` | Session teardown (managed apps shut down per their `shutdown` mode) |
+| `/toggle` | `/start` or `/stop` depending on current state |
+
+`/stop` and `/toggle` accept `?msfs=1`, which additionally asks MSFS to close its main
+window after teardown. It is never killed — a forced kill on the sim risks a corrupt state.
+
+### Installing the plugin
+
+Copy `streamdeck\com.gareth.simlauncher.sdPlugin` into
+`%APPDATA%\Elgato\StreamDeck\Plugins\` and restart the Stream Deck app. Drag **Sim Stack**
+(category *SimLauncher*) onto a key. It is plain HTML/JS — no build step, edit in place.
+
+One key does everything: the icon polls status once a second, and pressing it launches or
+shuts down the stack.
+
+| Key | Meaning |
+|-|-|
+| Grey `—` | SimLauncher itself is not running |
+| Grey `OFF` | Nothing up; press to launch MSFS + the stack |
+| Amber `SIM` | MSFS process detected, SimConnect not accepted yet |
+| Blue `SIM` | Connected, no session armed; press to arm |
+| Blue `ARM`/`WAIT`/`MENU` | Session active, not in a flight |
+| Green `WORLD`/`FLY` | In the world / in the cockpit |
+
+The title line under the icon shows `running/total` managed apps. To make the key also
+close MSFS on shutdown, set `CLOSE_MSFS_ON_STOP = true` at the top of `plugin.html`
+(and `PORT` there must match `localApiPort`).
 
 ## Logs
 

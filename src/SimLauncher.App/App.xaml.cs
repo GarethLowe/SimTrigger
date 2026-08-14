@@ -52,6 +52,7 @@ public partial class App : System.Windows.Application
                     sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SimConnectStateSource>>(),
                     () => sp.GetRequiredService<ConfigStore>().Current.SimConnection));
                 services.AddSingleton<SessionCoordinator>();
+                services.AddSingleton<LocalApi>();
                 services.AddSingleton<MainViewModel>();
                 services.AddSingleton<MainWindow>();
             })
@@ -65,6 +66,7 @@ public partial class App : System.Windows.Application
 
         var coordinator = _host.Services.GetRequiredService<SessionCoordinator>();
         coordinator.Initialize();
+        _host.Services.GetRequiredService<LocalApi>().Start();
 
         _window = _host.Services.GetRequiredService<MainWindow>();
         var viewModel = _host.Services.GetRequiredService<MainViewModel>();

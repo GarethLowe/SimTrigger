@@ -1,0 +1,29 @@
+{
+  "SDKVersion": 2,
+  "Name": "SimLauncher",
+  "Description": "MSFS session status and one-key start/stop of the SimLauncher stack.",
+  "Author": "Gareth Lowe",
+  "Version": "1.0.0",
+  "Icon": "icons/plugin",
+  "CategoryIcon": "icons/plugin",
+  "Category": "SimLauncher",
+  "CodePath": "plugin.html",
+  "Software": { "MinimumVersion": "6.0" },
+  "OS": [{ "Platform": "windows", "MinimumVersion": "10" }],
+  "Actions": [
+    {
+      "UUID": "com.gareth.simlauncher.stack",
+      "Name": "Sim Stack",
+      "Icon": "icons/action",
+      "Tooltip": "Shows MSFS/session status. Press to launch the stack, press again to shut it down.",
+      "Controllers": ["Keypad"],
+      "States": [
+        {
+          "Image": "icons/action",
+          "TitleAlignment": "bottom",
+          "FontSize": "9"
+        }
+      ]
+    }
+  ]
+}
